@@ -92,6 +92,20 @@ const createComposer = (/** @type {InitComposer} */ { variants: initSingularVari
 
 			const variantPairs = initSingularVariants[name]
 
+			if (typeof variantPairs === 'function') {
+				/** @type {VariantMatcher} */
+				const vMatch = { [name]: String(name) }
+
+				const vStyle = variantPairs
+
+				/** @type {VariantTuple} */
+				const variant = [vMatch, vStyle, false]
+
+				singularVariants.push(variant)
+
+				continue
+			}
+
 			for (const pair in variantPairs) {
 				/** @type {VariantMatcher} */
 				const vMatch = { [name]: String(pair) }
@@ -341,6 +355,14 @@ const getTargetVariantsToAdd = (
 		// skip empty variants
 		if (vEmpty) continue
 
+		// replace variant name
+		if (typeof vStyle == 'function') {
+			vMatch[vStyle.name] = typeof variantProps[vStyle.name] === 'object' ? vStyle.name : variantProps[vStyle.name]
+
+			// skip empty variants
+			if (vMatch[vStyle.name] === 'undefined') continue targetVariants
+		}
+
 		/** Position the variant should be inserted into. */
 		let vOrder = 0
 
@@ -362,7 +384,19 @@ const getTargetVariantsToAdd = (
 				let qOrder = 0
 
 				for (const query in pPair) {
-					if (vPair === String(pPair[query])) {
+					// responsive dynamic matches
+					if (typeof vStyle === 'function') {
+						if (query !== '@initial') {
+							;(targetVariantsToAdd[vOrder] = targetVariantsToAdd[vOrder] || []).push([
+								isCompoundVariant ? `cv` : `${vName}-${pPair[query]}`,
+								{
+									[query in media ? media[query] : query]: vStyle(pPair[query]),
+								},
+							])
+
+							vOrder += qOrder
+						}
+					} else if (vPair === String(pPair[query])) {
 						if (query !== '@initial') {
 							vStyle = {
 								[query in media ? media[query] : query]: vStyle,
@@ -384,7 +418,7 @@ const getTargetVariantsToAdd = (
 			else continue targetVariants
 		}
 
-		(targetVariantsToAdd[vOrder] = targetVariantsToAdd[vOrder] || []).push([isCompoundVariant ? `cv` : `${vName}-${vMatch[vName]}`, vStyle])
+		;(targetVariantsToAdd[vOrder] = targetVariantsToAdd[vOrder] || []).push([isCompoundVariant ? `cv` : `${vName}-${vMatch[vName]}`, typeof vStyle === 'function' ? vStyle(vMatch[vName]) : vStyle])
 	}
 
 	return targetVariantsToAdd
