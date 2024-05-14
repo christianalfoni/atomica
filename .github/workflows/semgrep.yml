@@ -1,0 +1,22 @@
+name: Semgrep
+on:
+  push:
+     branches:
+          - varun-semgrep
+  #pull_request:
+  #workflow_dispatch:
+
+jobs:
+  semgrep:
+    name: Run Semgrep 
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      # A Docker image with Semgrep installed. Do not change this.
+      image: returntocorp/semgrep
+    if: (github.actor != dependabot[bot])
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN_PUBLIC }}
