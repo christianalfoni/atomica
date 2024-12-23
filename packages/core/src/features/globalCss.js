@@ -24,7 +24,7 @@ export const createGlobalCssFunction = (
 
 				// support @import rules
 				if ('@import' in style) {
-					let importIndex = [].indexOf.call(sheet.sheet.cssRules, sheet.rules.themed.group) - 1
+					let importIndex = 0
 
 					// wrap import in quotes as a convenience
 					for (
